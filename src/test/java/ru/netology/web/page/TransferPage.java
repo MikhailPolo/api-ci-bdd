@@ -1,24 +1,33 @@
 package ru.netology.web.page;
 
 import com.codeborne.selenide.SelenideElement;
-import org.openqa.selenium.support.FindBy;
+import ru.netology.web.data.DataHelper;
 
-import static com.codeborne.selenide.Selenide.page;
+import java.time.Duration;
+
+import static com.codeborne.selenide.Condition.exactText;
+import static com.codeborne.selenide.Condition.visible;
+import static com.codeborne.selenide.Selectors.byText;
+import static com.codeborne.selenide.Selenide.$;
 
 public class TransferPage {
-    @FindBy(css = "input[type='text']")
-    private SelenideElement transferAmount;
-    @FindBy(css = "input[type='tel']")
-    private SelenideElement fieldCardFrom;
-    @FindBy(css = "button[data-test-id=action-transfer]")
-    private SelenideElement transferButton;
+    private SelenideElement transferButton = $("[data-test-id='action-transfer']");
+    private SelenideElement amountInput = $("[data-test-id='amount'] input");
+    private SelenideElement fromInput = $("[data-test-id='from'] input");
+    private SelenideElement transferHead = $(byText("Пополнение карты"));
+    private SelenideElement errorMessage = $("[data-test-id='error-notification']");
 
-    public DashboardPage transfer (String amount, String id) {
-        transferAmount.setValue(amount);
-        fieldCardFrom.setValue(id);
+    public DashboardPage makeValidTransfer (String amountToTransfer, DataHelper.CardInfo cardInfo) {
+        makeTransfer(amountToTransfer, cardInfo);
+        return new DashboardPage();
+    }
+    public void makeTransfer(String amountToTransfer, DataHelper.CardInfo cardInfo){
+        amountInput.setValue(amountToTransfer);
+        fromInput.setValue(cardInfo.getCardNumber());
         transferButton.click();
-        return page(DashboardPage.class);
-
+    }
+    public void findErrorMessage(String expectedText) {
+        errorMessage.shouldHave(exactText(expectedText), Duration.ofSeconds(15)).shouldBe(visible);
     }
 
 

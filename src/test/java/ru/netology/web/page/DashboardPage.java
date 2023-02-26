@@ -2,34 +2,33 @@ package ru.netology.web.page;
 
 import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.ElementsCollection;
-import lombok.val;
+import ru.netology.web.data.DataHelper;
 
+import static com.codeborne.selenide.Condition.attribute;
 import static com.codeborne.selenide.Selenide.$$;
-import static com.codeborne.selenide.Selenide.page;
 
 public class DashboardPage {
-  private ElementsCollection youCard = $$(".list__item div");
+
+  private ElementsCollection cards = $$(".list__item div");
   private final String balanceBeginning = "баланс: ";
   private final String balanceEnd = " р.";
 
   public DashboardPage() {
   }
 
-  public int getBalanceCard(String id){
-    val text = youCard.findBy(Condition.text(id)).text();
+  public int getBalanceCard(DataHelper.CardInfo cardInfo){
+    var text = cards.findBy(Condition.text(cardInfo.getCardNumber().substring(15))).getText();
     return extractBalance(text);
   }
   private int extractBalance(String text) {
-    val start = text.indexOf(balanceBeginning);
-    val finish = text.indexOf(balanceEnd);
-    val value = text.substring(start + balanceBeginning.length(), finish);
+    var start = text.indexOf(balanceBeginning);
+    var finish = text.indexOf(balanceEnd);
+    var value = text.substring(start + balanceBeginning.length(), finish);
     return Integer.parseInt(value);
   }
-  public TransferPage chooseCard(String id) {
-
-    val button = youCard.findBy(Condition.text(id));
-    button.$("button[data-test-id='action-deposit']").click();
-    return page(TransferPage.class);
+  public TransferPage selectCardToTransfer(DataHelper.CardInfo cardInfo) {
+    cards.findBy(attribute("data-test-id", cardInfo.getTestId())).$("button").click();
+    return new TransferPage();
   }
 
 }

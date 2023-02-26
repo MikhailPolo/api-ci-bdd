@@ -1,101 +1,84 @@
 package ru.netology.web.test;
 
-import com.codeborne.selenide.Configuration;
-import lombok.val;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.netology.web.data.DataHelper;
-import ru.netology.web.page.DashboardPage;
 import ru.netology.web.page.LoginPageV1;
 
-import static com.codeborne.selenide.Condition.visible;
-import static com.codeborne.selenide.Selectors.withText;
-import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.open;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MoneyTransferTest {
+  LoginPageV1 loginPage = new LoginPageV1();
 
   @BeforeEach
   public void setup() {
     var loginPage = open("http://localhost:9999", LoginPageV1.class);
+  }
+
+
+  @Test
+  void shouldTransferMoneyBetweenFirstCards() {
     var authInfo = DataHelper.getAuthInfo();
     var verificationPage = loginPage.validLogin(authInfo);
     var verificationCode = DataHelper.getVerificationCodeFor(authInfo);
-    verificationPage.validVerify(verificationCode);
-    Configuration.holdBrowserOpen = true;
+    var dashboardPage = verificationPage.validVerify(verificationCode);
+    var firstCardInfo = DataHelper.getFirstCardInfo();
+    var secondCardInfo = DataHelper.getSecondCardInfo();
+    var firstCardBalance = dashboardPage.getBalanceCard(firstCardInfo);
+    var secondCardBalance = dashboardPage.getBalanceCard(secondCardInfo);
+    var amount = DataHelper.generateValidAmount(firstCardBalance);
+    var expectedBalanceFirstCards = firstCardBalance - amount;
+    var expectedBalanceSecondCard = secondCardBalance + amount;
+    var transferPage = dashboardPage.selectCardToTransfer(secondCardInfo);
+    dashboardPage = transferPage.makeValidTransfer(String.valueOf(amount), firstCardInfo);
+    var actualBalanceFirstCard = dashboardPage.getBalanceCard(firstCardInfo);
+    var actualBalanceSecondCard = dashboardPage.getBalanceCard(secondCardInfo);
+    assertEquals(expectedBalanceFirstCards, actualBalanceFirstCard);
+    assertEquals(expectedBalanceSecondCard, actualBalanceSecondCard);
   }
 
-
-    @Test
-    void shouldTransferMoneyBetweenFirstCards() {
-    val amount = 5000;
-    var dashBoardPage = new DashboardPage();
-    val balanceCardOne = new DashboardPage().getBalanceCard(DataHelper.getCardNumberOne().getCardNumberSecurity());
-    val balanceCardTwo = new DashboardPage().getBalanceCard(DataHelper.getCardNumberTwo().getCardNumberSecurity());
-
-    var card = dashBoardPage.chooseCard(DataHelper.getCardNumberTwo().getCardNumberSecurity());
-    var dashboard = card.transfer(String.valueOf(amount), DataHelper.getCardNumberOne().getCardNumber());
-    $(withText("Ваши карты")).shouldBe(visible);
-
-    val newBalanceCardOne = balanceCardOne - amount;
-    val newBalanceCardTwo = balanceCardTwo + amount;
-
-    assertEquals(newBalanceCardOne, new DashboardPage().getBalanceCard(DataHelper.getCardNumberOne().getCardNumberSecurity()));
-    assertEquals(newBalanceCardTwo, new DashboardPage().getBalanceCard(DataHelper.getCardNumberTwo().getCardNumberSecurity()));
-      
-    }
   @Test
   void shouldTransferMoneyBetweenSecondCards() {
-    val amount = 5000;
-    var dashBoardPage = new DashboardPage();
-    val balanceCardOne = new DashboardPage().getBalanceCard(DataHelper.getCardNumberOne().getCardNumberSecurity());
-    val balanceCardTwo = new DashboardPage().getBalanceCard(DataHelper.getCardNumberTwo().getCardNumberSecurity());
-
-    var card = dashBoardPage.chooseCard(DataHelper.getCardNumberOne().getCardNumberSecurity());
-    var dashboard = card.transfer(String.valueOf(amount), DataHelper.getCardNumberTwo().getCardNumber());
-    $(withText("Ваши карты")).shouldBe(visible);
-
-    val newBalanceCardOne = balanceCardOne + amount;
-    val newBalanceCardTwo = balanceCardTwo - amount;
-
-    assertEquals(newBalanceCardOne, new DashboardPage().getBalanceCard(DataHelper.getCardNumberOne().getCardNumberSecurity()));
-    assertEquals(newBalanceCardTwo, new DashboardPage().getBalanceCard(DataHelper.getCardNumberTwo().getCardNumberSecurity()));
-
+    var authInfo = DataHelper.getAuthInfo();
+    var verificationPage = loginPage.validLogin(authInfo);
+    var verificationCode = DataHelper.getVerificationCodeFor(authInfo);
+    var dashboardPage = verificationPage.validVerify(verificationCode);
+    var firstCardInfo = DataHelper.getFirstCardInfo();
+    var secondCardInfo = DataHelper.getSecondCardInfo();
+    var firstCardBalance = dashboardPage.getBalanceCard(firstCardInfo);
+    var secondCardBalance = dashboardPage.getBalanceCard(secondCardInfo);
+    var amount = DataHelper.generateValidAmount(secondCardBalance);
+    var expectedBalanceFirstCards = firstCardBalance + amount;
+    var expectedBalanceSecondCard = secondCardBalance - amount;
+    var transferPage = dashboardPage.selectCardToTransfer(firstCardInfo);
+    dashboardPage = transferPage.makeValidTransfer(String.valueOf(amount), secondCardInfo);
+    var actualBalanceFirstCard = dashboardPage.getBalanceCard(firstCardInfo);
+    var actualBalanceSecondCard = dashboardPage.getBalanceCard(secondCardInfo);
+    assertEquals(expectedBalanceFirstCards, actualBalanceFirstCard);
+    assertEquals(expectedBalanceSecondCard, actualBalanceSecondCard);
   }
   @Test
-  void shouldTransferMoneyElseSumUnderLimitCardOne() {
-    val amount = 30000;
-    var dashBoardPage = new DashboardPage();
-    val balanceCardOne = new DashboardPage().getBalanceCard(DataHelper.getCardNumberOne().getCardNumberSecurity());
-    val balanceCardTwo = new DashboardPage().getBalanceCard(DataHelper.getCardNumberTwo().getCardNumberSecurity());
-
-    var card = dashBoardPage.chooseCard(DataHelper.getCardNumberTwo().getCardNumberSecurity());
-    var dashboard = card.transfer(String.valueOf(amount), DataHelper.getCardNumberOne().getCardNumber());
-    $(withText("Ваши карты")).shouldBe(visible);
-
-    val newBalanceCardOne = balanceCardOne - amount;
-    val newBalanceCardTwo = balanceCardTwo + amount;
-
-    assertEquals(newBalanceCardOne, new DashboardPage().getBalanceCard(DataHelper.getCardNumberOne().getCardNumberSecurity()));
-    assertEquals(newBalanceCardTwo, new DashboardPage().getBalanceCard(DataHelper.getCardNumberTwo().getCardNumberSecurity()));
-  }
-  @Test
-  void shouldTransferMoneyElseSumUnderLimitCardTwo() {
-    val amount = 30000;
-    var dashBoardPage = new DashboardPage();
-    val balanceCardOne = new DashboardPage().getBalanceCard(DataHelper.getCardNumberOne().getCardNumberSecurity());
-    val balanceCardTwo = new DashboardPage().getBalanceCard(DataHelper.getCardNumberTwo().getCardNumberSecurity());
-
-    var card = dashBoardPage.chooseCard(DataHelper.getCardNumberOne().getCardNumberSecurity());
-    var dashboard = card.transfer(String.valueOf(amount), DataHelper.getCardNumberTwo().getCardNumber());
-    $(withText("Ваши карты")).shouldBe(visible);
-
-    val newBalanceCardOne = balanceCardOne + amount;
-    val newBalanceCardTwo = balanceCardTwo - amount;
-
-    assertEquals(newBalanceCardOne, new DashboardPage().getBalanceCard(DataHelper.getCardNumberOne().getCardNumberSecurity()));
-    assertEquals(newBalanceCardTwo, new DashboardPage().getBalanceCard(DataHelper.getCardNumberTwo().getCardNumberSecurity()));
+  void shouldErrorMessageWhenAmountMoreBalance() {
+    var authInfo = DataHelper.getAuthInfo();
+    var verificationPage = loginPage.validLogin(authInfo);
+    var verificationCode = DataHelper.getVerificationCodeFor(authInfo);
+    var dashboardPage = verificationPage.validVerify(verificationCode);
+    var firstCardInfo = DataHelper.getFirstCardInfo();
+    var secondCardInfo = DataHelper.getSecondCardInfo();
+    var firstCardBalance = dashboardPage.getBalanceCard(firstCardInfo);
+    var secondCardBalance = dashboardPage.getBalanceCard(secondCardInfo);
+    var amount = DataHelper.generateInvalidAmount(secondCardBalance);
+    var transferPage = dashboardPage.selectCardToTransfer(firstCardInfo);
+    transferPage.makeTransfer(String.valueOf(amount), secondCardInfo);
+    transferPage.findErrorMessage("Ошибка! Недостаточно средств");
+    var actualBalanceFirstCard = dashboardPage.getBalanceCard(firstCardInfo);
+    var actualBalanceSecondCard = dashboardPage.getBalanceCard(secondCardInfo);
+    assertEquals(firstCardBalance, actualBalanceFirstCard);
+    assertEquals(secondCardBalance, actualBalanceSecondCard);
   }
 }
+
+
+
 
